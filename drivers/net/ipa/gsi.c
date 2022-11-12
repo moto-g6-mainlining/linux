@@ -1665,7 +1665,7 @@ static int gsi_generic_command(struct gsi *gsi, u32 channel_id,
 	/* Now issue the command */
 	val = u32_encode_bits(opcode, GENERIC_OPCODE_FMASK);
 	val |= u32_encode_bits(channel_id, GENERIC_CHID_FMASK);
-	val |= u32_encode_bits(GSI_EE_MODEM, GENERIC_EE_FMASK);
+	val |= u32_encode_bits(DMA_EE_MODEM, GENERIC_EE_FMASK);
 	val |= u32_encode_bits(params, GENERIC_PARAMS_FMASK);
 
 	timeout = !gsi_command(gsi, GSI_GENERIC_CMD_OFFSET, val);
@@ -2008,7 +2008,7 @@ static bool gsi_channel_data_valid(struct gsi *gsi, bool command,
 		return false;
 	}
 
-	if (data->ee_id != GSI_EE_AP && data->ee_id != GSI_EE_MODEM) {
+	if (data->ee_id != DMA_EE_AP && data->ee_id != DMA_EE_MODEM) {
 		dev_err(dev, "bad EE id %u; not AP or modem\n", data->ee_id);
 		return false;
 	}
@@ -2161,7 +2161,7 @@ static int gsi_channel_init(struct gsi *gsi, u32 count,
 			continue;	/* Skip over empty slots */
 
 		/* Mark modem channels to be allocated (hardware workaround) */
-		if (data[i].ee_id == GSI_EE_MODEM) {
+		if (data[i].ee_id == DMA_EE_MODEM) {
 			if (modem_alloc)
 				gsi->modem_channel_bitmap |=
 						BIT(data[i].channel_id);
@@ -2179,7 +2179,7 @@ err_unwind:
 	while (i--) {
 		if (ipa_gsi_endpoint_data_empty(&data[i]))
 			continue;
-		if (modem_alloc && data[i].ee_id == GSI_EE_MODEM) {
+		if (modem_alloc && data[i].ee_id == DMA_EE_MODEM) {
 			gsi->modem_channel_bitmap &= ~BIT(data[i].channel_id);
 			continue;
 		}

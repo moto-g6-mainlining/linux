@@ -28,7 +28,7 @@ struct ipa;
  * of registers is computed based on an "base" offset, plus an endpoint's
  * ID multiplied and a "stride" value for the register.  Similarly, some
  * registers have an offset that depends on execution environment.  In
- * this case, the stride is multiplied by a member of the gsi_ee_id
+ * this case, the stride is multiplied by a member of the dma_ee_id
  * enumerated type.
  *
  * Each version of IPA implements an array of ipa_reg structures indexed

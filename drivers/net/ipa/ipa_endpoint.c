@@ -114,7 +114,7 @@ static bool ipa_endpoint_data_valid_one(struct ipa *ipa, u32 count,
 		}
 
 		/* Nothing more to check for non-AP RX */
-		if (data->ee_id != GSI_EE_AP)
+		if (data->ee_id != DMA_EE_AP)
 			return true;
 
 		rx_config = &data->endpoint.config.rx;
@@ -211,7 +211,7 @@ static bool ipa_endpoint_data_valid_one(struct ipa *ipa, u32 count,
 		}
 
 		/* ...and if it's to be an AP endpoint... */
-		if (other_data->ee_id == GSI_EE_AP) {
+		if (other_data->ee_id == DMA_EE_AP) {
 			/* ...make sure it has status enabled. */
 			if (!other_data->endpoint.config.status_enable) {
 				dev_err(dev,
@@ -431,7 +431,7 @@ void ipa_endpoint_modem_pause_all(struct ipa *ipa, bool enable)
 	for (endpoint_id = 0; endpoint_id < IPA_ENDPOINT_MAX; endpoint_id++) {
 		struct ipa_endpoint *endpoint = &ipa->endpoint[endpoint_id];
 
-		if (endpoint->ee_id != GSI_EE_MODEM)
+		if (endpoint->ee_id != DMA_EE_MODEM)
 			continue;
 
 		if (!endpoint->toward_ipa)
@@ -473,7 +473,7 @@ int ipa_endpoint_modem_exception_reset_all(struct ipa *ipa)
 
 		/* We only reset modem TX endpoints */
 		endpoint = &ipa->endpoint[endpoint_id];
-		if (!(endpoint->ee_id == GSI_EE_MODEM && endpoint->toward_ipa))
+		if (!(endpoint->ee_id == DMA_EE_MODEM && endpoint->toward_ipa))
 			continue;
 
 		reg = ipa_reg(ipa, ENDP_STATUS);
@@ -1013,7 +1013,7 @@ void ipa_endpoint_modem_hol_block_clear_all(struct ipa *ipa)
 	for (i = 0; i < IPA_ENDPOINT_MAX; i++) {
 		struct ipa_endpoint *endpoint = &ipa->endpoint[i];
 
-		if (endpoint->toward_ipa || endpoint->ee_id != GSI_EE_MODEM)
+		if (endpoint->toward_ipa || endpoint->ee_id != DMA_EE_MODEM)
 			continue;
 
 		ipa_endpoint_init_hol_block_disable(endpoint);
@@ -1781,7 +1781,7 @@ static void ipa_endpoint_setup_one(struct ipa_endpoint *endpoint)
 	u32 channel_id = endpoint->channel_id;
 
 	/* Only AP endpoints get set up */
-	if (endpoint->ee_id != GSI_EE_AP)
+	if (endpoint->ee_id != DMA_EE_AP)
 		return;
 
 	endpoint->skb_frag_max = gsi->channel[channel_id].trans_tre_max - 1;
@@ -1925,7 +1925,7 @@ static void ipa_endpoint_init_one(struct ipa *ipa, enum ipa_endpoint_name name,
 
 	endpoint = &ipa->endpoint[data->endpoint_id];
 
-	if (data->ee_id == GSI_EE_AP)
+	if (data->ee_id == DMA_EE_AP)
 		ipa->channel_map[data->channel_id] = endpoint;
 	ipa->name_map[name] = endpoint;
 
@@ -1984,7 +1984,7 @@ u32 ipa_endpoint_init(struct ipa *ipa, u32 count,
 
 		if (data->endpoint.filter_support)
 			filter_map |= BIT(data->endpoint_id);
-		if (data->ee_id == GSI_EE_MODEM && data->toward_ipa)
+		if (data->ee_id == DMA_EE_MODEM && data->toward_ipa)
 			ipa->modem_tx_count++;
 	}
 
