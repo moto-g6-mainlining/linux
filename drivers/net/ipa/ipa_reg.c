@@ -78,6 +78,12 @@ const struct ipa_reg *ipa_reg(struct ipa *ipa, enum ipa_reg_id reg_id)
 static const struct ipa_regs *ipa_regs(enum ipa_version version)
 {
 	switch (version) {
+	case IPA_VERSION_2_0:
+		return &ipa_regs_v2_0;
+	case IPA_VERSION_2_5:
+		return &ipa_regs_v2_5;
+	case IPA_VERSION_2_6L:
+		return &ipa_regs_v2_6l;
 	case IPA_VERSION_3_1:
 		return &ipa_regs_v3_1;
 	case IPA_VERSION_3_5_1:
