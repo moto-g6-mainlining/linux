@@ -44,15 +44,15 @@
  * channels.
  *
  * The "raw" (not adjusted) GSI register range is mapped, and a pointer to
- * the mapped range is held in gsi->virt_raw.  The inter-EE interrupt
+ * the mapped range is held in ipa_dma->virt_raw.  The inter-EE interrupt
  * registers are accessed using that pointer.
  *
- * Most registers are accessed using gsi->virt, which is a copy of the "raw"
+ * Most registers are accessed using ipa_dma->virt, which is a copy of the "raw"
  * pointer, adjusted downward by the fixed amount.
  */
 #define GSI_EE_REG_ADJUST			0x0000d000	/* IPA v4.5+ */
 
-/* The inter-EE IRQ registers are relative to gsi->virt_raw (IPA v3.5+) */
+/* The inter-EE IRQ registers are relative to ipa_dma->virt_raw (IPA v3.5+) */
 
 #define GSI_INTER_EE_SRC_CH_IRQ_MSK_OFFSET \
 			(0x0000c020 + 0x1000 * DMA_EE_AP)
@@ -60,7 +60,7 @@
 #define GSI_INTER_EE_SRC_EV_CH_IRQ_MSK_OFFSET \
 			(0x0000c024 + 0x1000 * DMA_EE_AP)
 
-/* All other register offsets are relative to gsi->virt */
+/* All other register offsets are relative to ipa_dma->virt */
 
 /** enum gsi_channel_type - CHTYPE_PROTOCOL field values in CH_C_CNTXT_0 */
 enum gsi_channel_type {
@@ -387,7 +387,7 @@ enum gsi_err_code {
 	GSI_OUT_OF_BUFFERS			= 0x2,
 	GSI_OUT_OF_RESOURCES			= 0x3,
 	GSI_UNSUPPORTED_INTER_EE_OP		= 0x4,
-	GSI_EVT_RING_EMPTY			= 0x5,
+	IPA_DMA_EVT_RING_EMPTY			= 0x5,
 	GSI_NON_ALLOCATED_EVT_ACCESS		= 0x6,
 	/* 7 is not assigned */
 	GSI_HWO_1				= 0x8,
