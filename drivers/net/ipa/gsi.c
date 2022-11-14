@@ -17,7 +17,7 @@
 
 #include "ipa_dma.h"
 #include "gsi_reg.h"
-#include "gsi_private.h"
+#include "ipa_dma_private.h"
 #include "gsi_trans.h"
 #include "ipa_gsi.h"
 #include "ipa_data.h"
@@ -943,7 +943,7 @@ static void gsi_channel_reset(struct ipa_dma *ipa_dma, u32 channel_id, bool door
 	/* Hardware assumes this is 0 following reset */
 	channel->tre_ring.index = 0;
 	gsi_channel_program(channel, doorbell);
-	gsi_channel_trans_cancel_pending(channel);
+	ipa_dma_channel_trans_cancel_pending(channel);
 
 	mutex_unlock(&ipa_dma->mutex);
 }
@@ -1328,7 +1328,7 @@ gsi_event_trans(struct ipa_dma *ipa_dma, struct gsi_event *event)
 	tre_offset = lower_32_bits(le64_to_cpu(event->xfer_ptr));
 	tre_index = gsi_ring_index(&channel->tre_ring, tre_offset);
 
-	trans = gsi_channel_trans_mapped(channel, tre_index);
+	trans = ipa_dma_channel_trans_mapped(channel, tre_index);
 
 	if (WARN(!trans, "channel %u event with no transaction\n", channel_id))
 		return NULL;
@@ -1396,7 +1396,7 @@ static void gsi_evt_ring_update(struct ipa_dma *ipa_dma, u32 evt_ring_id, u32 in
 		else
 			gsi_trans_tx_completed(trans);
 
-		gsi_trans_move_complete(trans);
+		ipa_dma_trans_move_complete(trans);
 
 		/* Move on to the next event and transaction */
 		if (--event_avail)
@@ -1527,9 +1527,9 @@ static struct ipa_dma_trans *gsi_channel_poll_one(struct ipa_dma_channel *channe
 	struct ipa_dma_trans *trans;
 
 	/* Get the first completed transaction */
-	trans = gsi_channel_trans_complete(channel);
+	trans = ipa_dma_channel_trans_complete(channel);
 	if (trans)
-		gsi_trans_move_polled(trans);
+		ipa_dma_trans_move_polled(trans);
 
 	return trans;
 }
@@ -1543,7 +1543,7 @@ static struct ipa_dma_trans *gsi_channel_poll_one(struct ipa_dma_channel *channe
  *
  * Single transactions completed by hardware are polled until either
  * the budget is exhausted, or there are no more.  Each transaction
- * polled is passed to gsi_trans_complete(), to perform remaining
+ * polled is passed to ipa_dma_trans_complete(), to perform remaining
  * completion processing and retire/free the transaction.
  */
 static int gsi_channel_poll(struct napi_struct *napi, int budget)
@@ -1558,7 +1558,7 @@ static int gsi_channel_poll(struct napi_struct *napi, int budget)
 		trans = gsi_channel_poll_one(channel);
 		if (!trans)
 			break;
-		gsi_trans_complete(trans);
+		ipa_dma_trans_complete(trans);
 	}
 
 	if (count < budget && napi_complete(napi))
@@ -2104,19 +2104,19 @@ static int gsi_channel_init_one(struct ipa_dma *ipa_dma,
 		goto err_channel_evt_ring_exit;
 	}
 
-	ret = gsi_channel_trans_init(ipa_dma, data->channel_id);
+	ret = ipa_dma_channel_trans_init(ipa_dma, data->channel_id);
 	if (ret)
 		goto err_ring_free;
 
 	if (command) {
-		u32 tre_max = gsi_channel_tre_max(ipa_dma, data->channel_id);
+		u32 tre_max = ipa_dma_channel_tre_max(ipa_dma, data->channel_id);
 
 		ret = ipa_cmd_pool_init(channel, tre_max);
 	}
 	if (!ret)
 		return 0;	/* Success! */
 
-	gsi_channel_trans_exit(channel);
+	ipa_dma_channel_trans_exit(channel);
 err_ring_free:
 	gsi_ring_free(ipa_dma, &channel->tre_ring);
 err_channel_evt_ring_exit:
@@ -2135,7 +2135,7 @@ static void gsi_channel_exit_one(struct ipa_dma_channel *channel)
 
 	if (channel->command)
 		ipa_cmd_pool_exit(channel);
-	gsi_channel_trans_exit(channel);
+	ipa_dma_channel_trans_exit(channel);
 	gsi_ring_free(channel->ipa_dma, &channel->tre_ring);
 	gsi_channel_evt_ring_exit(channel);
 }
