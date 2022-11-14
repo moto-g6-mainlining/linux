@@ -11,7 +11,7 @@
 #include <linux/dma-direction.h>
 
 #include "ipa_dma.h"
-#include "gsi_trans.h"
+#include "ipa_dma_trans.h"
 #include "ipa.h"
 #include "ipa_endpoint.h"
 #include "ipa_table.h"
@@ -360,7 +360,7 @@ int ipa_cmd_pool_init(struct ipa_dma_channel *channel, u32 tre_max)
 	 * transaction can require up to the maximum supported by the
 	 * channel; treat them as if they were allocated all at once.
 	 */
-	return gsi_trans_pool_init_dma(dev, &trans_info->cmd_pool,
+	return ipa_dma_trans_pool_init_dma(dev, &trans_info->cmd_pool,
 				       sizeof(union ipa_cmd_payload),
 				       tre_max, channel->trans_tre_max);
 }
@@ -370,7 +370,7 @@ void ipa_cmd_pool_exit(struct ipa_dma_channel *channel)
 	struct ipa_dma_trans_info *trans_info = &channel->trans_info;
 	struct device *dev = channel->ipa_dma->dev;
 
-	gsi_trans_pool_exit_dma(dev, &trans_info->cmd_pool);
+	ipa_dma_trans_pool_exit_dma(dev, &trans_info->cmd_pool);
 }
 
 static union ipa_cmd_payload *
@@ -382,7 +382,7 @@ ipa_cmd_payload_alloc(struct ipa *ipa, dma_addr_t *addr)
 	endpoint = ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX];
 	trans_info = &ipa->ipa_dma.channel[endpoint->channel_id].trans_info;
 
-	return gsi_trans_pool_alloc_dma(&trans_info->cmd_pool, addr);
+	return ipa_dma_trans_pool_alloc_dma(&trans_info->cmd_pool, addr);
 }
 
 /* If hash_size is 0, hash_offset and hash_addr ignored. */
@@ -421,7 +421,7 @@ void ipa_cmd_table_init_add(struct ipa_dma_trans *trans,
 	payload->flags = cpu_to_le64(val);
 	payload->nhash_rules_addr = cpu_to_le64(addr);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -451,7 +451,7 @@ void ipa_cmd_hdr_init_local_add(struct ipa_dma_trans *trans, u32 offset, u16 siz
 	flags |= u32_encode_bits(offset, HDR_INIT_LOCAL_FLAGS_HDR_ADDR_FMASK);
 	payload->flags = cpu_to_le32(flags);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -508,7 +508,7 @@ void ipa_cmd_register_write_add(struct ipa_dma_trans *trans, u32 offset, u32 val
 	payload->value_mask = cpu_to_le32(mask);
 	payload->clear_options = cpu_to_le32(options);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -527,7 +527,7 @@ static void ipa_cmd_ip_packet_init_add(struct ipa_dma_trans *trans, u8 endpoint_
 	payload->dest_endpoint = u8_encode_bits(endpoint_id,
 					IPA_PACKET_INIT_DEST_ENDPOINT_FMASK);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -569,7 +569,7 @@ void ipa_cmd_dma_shared_mem_add(struct ipa_dma_trans *trans, u32 offset, u16 siz
 	payload->flags = cpu_to_le16(flags);
 	payload->system_addr = cpu_to_le64(addr);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -586,7 +586,7 @@ static void ipa_cmd_ip_tag_status_add(struct ipa_dma_trans *trans)
 
 	payload->tag = le64_encode_bits(0, IP_PACKET_TAG_STATUS_TAG_FMASK);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -601,7 +601,7 @@ static void ipa_cmd_transfer_add(struct ipa_dma_trans *trans)
 	/* Just transfer a zero-filled payload structure */
 	payload = ipa_cmd_payload_alloc(ipa, &payload_addr);
 
-	gsi_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
+	ipa_dma_trans_cmd_add(trans, payload, sizeof(*payload), payload_addr,
 			  opcode);
 }
 
@@ -652,6 +652,6 @@ struct ipa_dma_trans *ipa_cmd_trans_alloc(struct ipa *ipa, u32 tre_count)
 
 	endpoint = ipa->name_map[IPA_ENDPOINT_AP_COMMAND_TX];
 
-	return gsi_channel_trans_alloc(&ipa->ipa_dma, endpoint->channel_id,
+	return ipa_dma_channel_trans_alloc(&ipa->ipa_dma, endpoint->channel_id,
 				       tre_count, DMA_NONE);
 }

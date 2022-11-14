@@ -18,7 +18,7 @@
 #include "ipa_dma.h"
 #include "gsi_reg.h"
 #include "ipa_dma_private.h"
-#include "gsi_trans.h"
+#include "ipa_dma_trans.h"
 #include "ipa_gsi.h"
 #include "ipa_data.h"
 #include "ipa_version.h"
@@ -749,7 +749,7 @@ static void gsi_channel_trans_quiesce(struct ipa_dma_channel *channel)
 	trans = gsi_channel_trans_last(channel);
 	if (trans) {
 		wait_for_completion(&trans->completion);
-		gsi_trans_free(trans);
+		ipa_dma_trans_free(trans);
 	}
 }
 
@@ -2300,6 +2300,6 @@ struct ipa_dma_ops gsi_ops = {
 	.trans_tx_committed = gsi_trans_tx_committed,
 	.trans_tx_queued = gsi_trans_tx_queued,
 
-	.trans_commit = gsi_trans_commit,
-	.trans_commit_wait = gsi_trans_commit_wait,
+	.trans_commit = ipa_dma_trans_commit,
+	.trans_commit_wait = ipa_dma_trans_commit_wait,
 };
