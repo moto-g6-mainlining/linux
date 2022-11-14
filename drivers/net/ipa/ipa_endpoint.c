@@ -439,7 +439,7 @@ void ipa_endpoint_modem_pause_all(struct ipa *ipa, bool enable)
 		else if (ipa->version < IPA_VERSION_4_2)
 			ipa_endpoint_program_delay(endpoint, enable);
 		else
-			gsi_modem_channel_flow_control(&ipa->gsi,
+			ipa->gsi.ops->modem_channel_flow_control(&ipa->gsi,
 						       endpoint->channel_id,
 						       enable);
 	}
@@ -488,7 +488,7 @@ int ipa_endpoint_modem_exception_reset_all(struct ipa *ipa)
 
 	ipa_cmd_pipeline_clear_add(trans);
 
-	gsi_trans_commit_wait(trans);
+	trans->gsi->ops->trans_commit_wait(trans);
 
 	ipa_cmd_pipeline_clear_wait(ipa);
 
@@ -1110,7 +1110,7 @@ int ipa_endpoint_skb_tx(struct ipa_endpoint *endpoint, struct sk_buff *skb)
 		goto err_trans_free;
 	trans->data = skb;	/* transaction owns skb now */
 
-	gsi_trans_commit(trans, !netdev_xmit_more());
+	trans->gsi->ops->trans_commit(trans, !netdev_xmit_more());
 
 	return 0;
 
@@ -1207,7 +1207,7 @@ static void ipa_endpoint_replenish(struct ipa_endpoint *endpoint)
 
 		/* Ring the doorbell if we've got a full batch */
 		doorbell = !(++endpoint->replenish_count % IPA_REPLENISH_BATCH);
-		gsi_trans_commit(trans, doorbell);
+		trans->gsi->ops->trans_commit(trans, doorbell);
 	}
 
 	clear_bit(IPA_REPLENISH_ACTIVE, endpoint->replenish_flags);
@@ -1545,13 +1545,13 @@ static int ipa_endpoint_reset_rx_aggr(struct ipa_endpoint *endpoint)
 	 * active.  We'll re-enable the doorbell (if appropriate) when
 	 * we reset again below.
 	 */
-	gsi_channel_reset(gsi, endpoint->channel_id, false);
+	gsi->ops->channel_reset(gsi, endpoint->channel_id, false);
 
 	/* Make sure the channel isn't suspended */
 	suspended = ipa_endpoint_program_suspend(endpoint, false);
 
 	/* Start channel and do a 1 byte read */
-	ret = gsi_channel_start(gsi, endpoint->channel_id);
+	ret = gsi->ops->channel_start(gsi, endpoint->channel_id);
 	if (ret)
 		goto out_suspend_again;
 
@@ -1574,7 +1574,7 @@ static int ipa_endpoint_reset_rx_aggr(struct ipa_endpoint *endpoint)
 
 	gsi_trans_read_byte_done(gsi, endpoint->channel_id);
 
-	ret = gsi_channel_stop(gsi, endpoint->channel_id);
+	ret = gsi->ops->channel_stop(gsi, endpoint->channel_id);
 	if (ret)
 		goto out_suspend_again;
 
@@ -1583,14 +1583,14 @@ static int ipa_endpoint_reset_rx_aggr(struct ipa_endpoint *endpoint)
 	 * complete the channel reset sequence.  Finish by suspending the
 	 * channel again (if necessary).
 	 */
-	gsi_channel_reset(gsi, endpoint->channel_id, true);
+	gsi->ops->channel_reset(gsi, endpoint->channel_id, true);
 
 	usleep_range(USEC_PER_MSEC, 2 * USEC_PER_MSEC);
 
 	goto out_suspend_again;
 
 err_endpoint_stop:
-	(void)gsi_channel_stop(gsi, endpoint->channel_id);
+	(void)gsi->ops->channel_stop(gsi, endpoint->channel_id);
 out_suspend_again:
 	if (suspended)
 		(void)ipa_endpoint_program_suspend(endpoint, true);
@@ -1605,6 +1605,7 @@ static void ipa_endpoint_reset(struct ipa_endpoint *endpoint)
 {
 	u32 channel_id = endpoint->channel_id;
 	struct ipa *ipa = endpoint->ipa;
+	struct gsi *gsi = &ipa->gsi;
 	bool special;
 	int ret = 0;
 
@@ -1617,7 +1618,7 @@ static void ipa_endpoint_reset(struct ipa_endpoint *endpoint)
 	if (special && ipa_endpoint_aggr_active(endpoint))
 		ret = ipa_endpoint_reset_rx_aggr(endpoint);
 	else
-		gsi_channel_reset(&ipa->gsi, channel_id, true);
+		gsi->ops->channel_reset(gsi, channel_id, true);
 
 	if (ret)
 		dev_err(&ipa->pdev->dev,
@@ -1665,7 +1666,7 @@ int ipa_endpoint_enable_one(struct ipa_endpoint *endpoint)
 	struct gsi *gsi = &ipa->gsi;
 	int ret;
 
-	ret = gsi_channel_start(gsi, endpoint->channel_id);
+	ret = gsi->ops->channel_start(gsi, endpoint->channel_id);
 	if (ret) {
 		dev_err(&ipa->pdev->dev,
 			"error %d starting %cX channel %u for endpoint %u\n",
@@ -1704,7 +1705,7 @@ void ipa_endpoint_disable_one(struct ipa_endpoint *endpoint)
 	}
 
 	/* Note that if stop fails, the channel's state is not well-defined */
-	ret = gsi_channel_stop(gsi, endpoint->channel_id);
+	ret = gsi->ops->channel_stop(gsi, endpoint->channel_id);
 	if (ret)
 		dev_err(&ipa->pdev->dev,
 			"error %d attempting to stop endpoint %u\n", ret,
@@ -1725,7 +1726,7 @@ void ipa_endpoint_suspend_one(struct ipa_endpoint *endpoint)
 		(void)ipa_endpoint_program_suspend(endpoint, true);
 	}
 
-	ret = gsi_channel_suspend(gsi, endpoint->channel_id);
+	ret = gsi->ops->channel_suspend(gsi, endpoint->channel_id);
 	if (ret)
 		dev_err(dev, "error %d suspending channel %u\n", ret,
 			endpoint->channel_id);
@@ -1743,7 +1744,7 @@ void ipa_endpoint_resume_one(struct ipa_endpoint *endpoint)
 	if (!endpoint->toward_ipa)
 		(void)ipa_endpoint_program_suspend(endpoint, false);
 
-	ret = gsi_channel_resume(gsi, endpoint->channel_id);
+	ret = gsi->ops->channel_resume(gsi, endpoint->channel_id);
 	if (ret)
 		dev_err(dev, "error %d resuming channel %u\n", ret,
 			endpoint->channel_id);

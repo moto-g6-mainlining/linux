@@ -294,7 +294,7 @@ ipa_filter_reset_table(struct ipa *ipa, enum ipa_mem_id mem_id, bool modem)
 		ipa_table_reset_add(trans, true, endpoint_id, 1, mem_id);
 	}
 
-	gsi_trans_commit_wait(trans);
+	trans->gsi->ops->trans_commit_wait(trans);
 
 	return 0;
 }
@@ -357,7 +357,7 @@ static int ipa_route_reset(struct ipa *ipa, bool modem)
 	ipa_table_reset_add(trans, false, first, count,
 			    IPA_MEM_V6_ROUTE_HASHED);
 
-	gsi_trans_commit_wait(trans);
+	trans->gsi->ops->trans_commit_wait(trans);
 
 	return 0;
 }
@@ -408,7 +408,7 @@ int ipa_table_hash_flush(struct ipa *ipa)
 
 	ipa_cmd_register_write_add(trans, offset, val, val, false);
 
-	gsi_trans_commit_wait(trans);
+	trans->gsi->ops->trans_commit_wait(trans);
 
 	return 0;
 }
@@ -507,7 +507,7 @@ int ipa_table_setup(struct ipa *ipa)
 	ipa_table_init_add(trans, true, IPA_CMD_IP_V6_FILTER_INIT,
 			   IPA_MEM_V6_FILTER, IPA_MEM_V6_FILTER_HASHED);
 
-	gsi_trans_commit_wait(trans);
+	trans->gsi->ops->trans_commit_wait(trans);
 
 	return 0;
 }
