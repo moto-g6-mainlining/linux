@@ -63,13 +63,12 @@ static bool ipa_reg_valid(struct ipa *ipa, enum ipa_reg_id reg_id)
 	}
 
 	/* To be valid, it must be defined */
-
 	return valid && ipa->regs->reg[reg_id];
 }
 
 const struct ipa_reg *ipa_reg(struct ipa *ipa, enum ipa_reg_id reg_id)
 {
-	if (WARN_ON(!ipa_reg_valid(ipa, reg_id)))
+	if (WARN(!ipa_reg_valid(ipa, reg_id), "Register %d invalid\n", reg_id))
 		return NULL;
 
 	return ipa->regs->reg[reg_id];
