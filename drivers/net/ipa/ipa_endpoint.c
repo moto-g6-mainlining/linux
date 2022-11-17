@@ -36,10 +36,14 @@
 
 /** enum ipa_status_opcode - status element opcode hardware values */
 enum ipa_status_opcode {
-	IPA_STATUS_OPCODE_PACKET		= 0x01,
-	IPA_STATUS_OPCODE_DROPPED_PACKET	= 0x04,
-	IPA_STATUS_OPCODE_SUSPENDED_PACKET	= 0x08,
-	IPA_STATUS_OPCODE_PACKET_2ND_PASS	= 0x40,
+	IPA_V2_STATUS_OPCODE_PACKET		= 0x00,
+	IPA_V2_STATUS_OPCODE_DROPPED_PACKET	= 0x02,
+	IPA_V2_STATUS_OPCODE_SUSPENDED_PACKET	= 0x03,
+	IPA_V2_STATUS_OPCODE_XLAT_PACKET	= 0x06,
+	IPA_V3_STATUS_OPCODE_PACKET		= 0x01,
+	IPA_V3_STATUS_OPCODE_DROPPED_PACKET	= 0x04,
+	IPA_V3_STATUS_OPCODE_SUSPENDED_PACKET	= 0x08,
+	IPA_V3_STATUS_OPCODE_PACKET_2ND_PASS	= 0x40,
 };
 
 /** enum ipa_status_exception - status element exception type */
@@ -1317,16 +1321,29 @@ static bool ipa_endpoint_skb_build(struct ipa_endpoint *endpoint,
 /* The format of a packet status element is the same for several status
  * types (opcodes).  Other types aren't currently supported.
  */
-static bool ipa_status_format_packet(enum ipa_status_opcode opcode)
+static bool ipa_status_format_packet(struct ipa *ipa,
+				     enum ipa_status_opcode opcode)
 {
-	switch (opcode) {
-	case IPA_STATUS_OPCODE_PACKET:
-	case IPA_STATUS_OPCODE_DROPPED_PACKET:
-	case IPA_STATUS_OPCODE_SUSPENDED_PACKET:
-	case IPA_STATUS_OPCODE_PACKET_2ND_PASS:
-		return true;
-	default:
-		return false;
+	if (ipa->version <= IPA_VERSION_2_6L) {
+		switch (opcode) {
+		case IPA_V2_STATUS_OPCODE_PACKET:
+		case IPA_V2_STATUS_OPCODE_DROPPED_PACKET:
+		case IPA_V2_STATUS_OPCODE_SUSPENDED_PACKET:
+		case IPA_V2_STATUS_OPCODE_XLAT_PACKET:
+			return true;
+		default:
+			return false;
+		}
+	} else {
+		switch (opcode) {
+		case IPA_V3_STATUS_OPCODE_PACKET:
+		case IPA_V3_STATUS_OPCODE_DROPPED_PACKET:
+		case IPA_V3_STATUS_OPCODE_SUSPENDED_PACKET:
+		case IPA_V3_STATUS_OPCODE_PACKET_2ND_PASS:
+			return true;
+		default:
+			return false;
+		}
 	}
 }
 
@@ -1335,7 +1352,7 @@ static bool ipa_endpoint_status_skip(struct ipa_endpoint *endpoint,
 {
 	u32 endpoint_id;
 
-	if (!ipa_status_format_packet(status->opcode))
+	if (!ipa_status_format_packet(endpoint->ipa, status->opcode))
 		return true;
 	if (!status->pkt_len)
 		return true;
