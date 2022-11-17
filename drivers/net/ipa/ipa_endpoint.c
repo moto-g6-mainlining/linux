@@ -1433,13 +1433,6 @@ static void ipa_endpoint_status_parse(struct ipa_endpoint *endpoint,
 			break;
 		}
 
-		/* Skip over status packets that lack packet data */
-		if (ipa_endpoint_status_skip(endpoint, status)) {
-			data += sizeof(*status);
-			resid -= sizeof(*status);
-			continue;
-		}
-
 		/* Compute the amount of buffer space consumed by the packet,
 		 * including the status element.  If the hardware is configured
 		 * to pad packet data to an aligned boundary, account for that.
@@ -1451,6 +1444,13 @@ static void ipa_endpoint_status_parse(struct ipa_endpoint *endpoint,
 		len = sizeof(*status) + ALIGN(len, align);
 		if (endpoint->config.checksum)
 			len += sizeof(struct rmnet_map_dl_csum_trailer);
+
+		/* Skip over status packets that can't be processed */
+		if (ipa_endpoint_status_skip(endpoint, status)) {
+			data += len;
+			resid -= len;
+			continue;
+		}
 
 		if (!ipa_endpoint_status_drop(endpoint, status)) {
 			void *data2;
