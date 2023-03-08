@@ -12,6 +12,7 @@ obj-$(CONFIG_DRM_PANEL_TENOR_ILI7807D_DJN) += panel-tenor-ili7807d_djn.o
 obj-$(CONFIG_DRM_PANEL_TENOR_ILI7807D_DJN_AUO) += panel-tenor-ili7807d_djn_auo.o
 obj-$(CONFIG_DRM_PANEL_TIANMA_622_V0) += panel-tianma-622-v0.o
 obj-$(CONFIG_DRM_PANEL_TIANMA_TL052VDPX02) += panel-tianma-tl052vdpx02.o
+obj-$(CONFIG_DRM_PANEL_TIANMA_TL057FVXP01) += panel-tianma-tl057fvxp01.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_AUO_R61322) += panel-xiaomi-auo-r61322.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_BOE_ILI9885) += panel-xiaomi-boe-ili9885.o
 obj-$(CONFIG_DRM_PANEL_XIAOMI_EBBG_R63350) += panel-xiaomi-ebbg-r63350.o
