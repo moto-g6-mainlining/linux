@@ -94,6 +94,9 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pmx_mdss_default>;
 		pinctrl-1 = <&pmx_mdss_sleep>;
+		
+		vcc-supply = <&pm8953_l10>;
+		iovcc-supply = <&pm8953_l6>;
 
 		port {
 			panel_in: endpoint {
