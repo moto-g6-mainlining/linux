@@ -157,7 +157,7 @@ static int tianma_tl057fvxp01_unprepare(struct drm_panel *panel)
 	return 0;
 }
 
-static const struct drm_display_mode tianma_565_v0_mode = {
+static const struct drm_display_mode tianma_tl057fvxp01_mode = {
 	.clock = (1080 + 53 + 4 + 53) * (2160 + 14 + 1 + 11) * 60 / 1000,
 	.hdisplay = 1080,
 	.hsync_start = 1080 + 53,
