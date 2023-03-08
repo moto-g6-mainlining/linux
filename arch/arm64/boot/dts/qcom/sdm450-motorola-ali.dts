@@ -8,28 +8,27 @@
 #include "pmi8950.dtsi"
 
 / {
-	model = "ali";
-	compatible = "motorola,ali", "qcom,sdm450";
-	qcom,msm-id = <338 0>;
-	qcom,board-id = <0x41 0xb1a0 0x42 0xb1a0>, <0x43 0xc100>, <0x42 0xb1b0>, <0x43 0xc200 0x44 0xc200>, <0x42 0xb200 0x43 0xb200>;
+  model = "ali";
+  compatible = "motorola,ali", "qcom,sdm450";
+  qcom,msm-id = <338 0>;
+  qcom,board-id = <0x41 0xb1a0 0x42 0xb1a0>, <0x43 0xc100>, <0x42 0xb1b0>, <0x43 0xc200 0x44 0xc200>, <0x42 0xb200 0x43 0xb200>;
 
 	reserved-memory {
-	/delete-node/other_ext_region@85b00000;
+		/delete-node/other_ext_region@85b00000;
 
-	other_ext_region@84300000 {
-		no-map;
-		reg = <0x0 0x84300000 0x0 0x2000000>;
+		other_ext_region@84300000 {
+			no-map;
+			reg = <0x0 0x84300000 0x0 0x2000000>;
+		};
+
+		ramoops_mem: ramoops_mem_region {
+			no-map;
+			compatible = "ramoops";
+			reg = <0x0 0xef000000 0x0 0xC0000>;
+			console-size = <0x40000>;
+		};
 	};
-
-	ramoops_mem: ramoops_mem_region {
-		no-map;
-		compatible = "ramoops";
-		reg = <0x0 0xef000000 0x0 0xC0000>;
-		console-size = <0x40000>;
-	};
-
-	};
-
+	
 	vph_pwr: vph-pwr-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vph_pwr";
@@ -46,13 +45,14 @@
 			gpios = <&tlmm 85 GPIO_ACTIVE_LOW>;
 		};
 	};
+
 };
 
 &i2c_3 {
 	status = "okay";
 
 	touchscreen@38 {
-		compatible = "edt,edt-ft5406";
+		compatible = "edt,edt-ft5406", "edt,edt-ft5x06"; // the touchscreen is actually ft5446, but the ft5406 driver works.
 		reg = <0x38>;
 		interrupt-parent = <&tlmm>;
 		interrupts = <65 IRQ_TYPE_EDGE_FALLING>;
@@ -71,7 +71,7 @@
 	status = "okay";
 
 	/* Don't copy-paste! See pmi8950.dtsi */
-
+	
 	qcom,enabled-strings = <0 1 2>;
 	qcom,num-strings = <3>;
 
@@ -80,13 +80,15 @@
 };
 
 &dsi0 {
+	status = "okay";
+	vdda-supply = <&pm8953_s3>;
+	vddio-supply = <&pm8953_l6>;
+	
 	panel@0 {
 		compatible = "tianma,tl057fvxp01";
 		reg = <0>;
-
+		
 		backlight = <&pmi8950_wled>;
-		vsp-supply = <&lab_vreg>;
-		vsn-supply = <&ibb_vreg>;
 		reset-gpios = <&tlmm 61 GPIO_ACTIVE_LOW>;
 
 		pinctrl-names = "default";
@@ -102,8 +104,13 @@
 };
 
 &dsi0_out {
-	remote-endpoint = <&panel_in>;
 	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+
+&dsi_phy0 {
+	vcca-supply = <&pm8953_l3>;
 };
 
 &sdhc_1 {
